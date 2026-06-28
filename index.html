@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share Averaging Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    line-height: 1.6;
+    padding: 20px;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 1.75rem;
+    margin-bottom: 6px;
+    color: #16213e;
+  }
+  .subtitle {
+    text-align: center;
+    color: #555;
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card h2 {
+    font-size: 1.15rem;
+    margin-bottom: 16px;
+    color: #16213e;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .input-row label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+    min-width: 60px;
+  }
+  .input-row input {
+    flex: 1;
+    min-width: 80px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-row input:focus { border-color: #0f3460; }
+  .input-row input[type="number"] { -moz-appearance: textfield; }
+  .input-row input::-webkit-outer-spin-button,
+  .input-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: #0f3460; color: #fff; }
+  .btn-primary:hover { background: #16213e; }
+  .btn-danger { background: #e63946; color: #fff; }
+  .btn-danger:hover { background: #c1121f; }
+  .btn-success { background: #2a9d8f; color: #fff; }
+  .btn-success:hover { background: #21867a; }
+  .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+  .btn-outline {
+    background: transparent;
+    color: #0f3460;
+    border: 1.5px solid #0f3460;
+  }
+  .btn-outline:hover { background: #0f3460; color: #fff; }
+  .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+
+  .entry {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 4px solid #0f3460;
+  }
+  .entry > *:nth-child(1) { flex: 1; text-align: center; font-weight: 600; }
+  .entry > *:nth-child(2) { flex: 1; text-align: center; font-weight: 600; }
+  .entry > *:nth-child(3) { flex: 1.2; text-align: center; color: #333; }
+  .entry-header {
+    display: flex;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 12px 6px;
+  }
+  .entry-header > *:nth-child(1) { flex: 1; text-align: center; }
+  .entry-header > *:nth-child(2) { flex: 1; text-align: center; }
+  .entry-header > *:nth-child(3) { flex: 1.2; text-align: center; }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .result-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+  }
+  .result-item.highlight {
+    background: #0f3460;
+    color: #fff;
+    grid-column: 1 / -1;
+  }
+  .result-item .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 4px; }
+  .result-item .value { font-size: 1.3rem; font-weight: 700; }
+
+  #empty-state {
+    text-align: center;
+    padding: 24px 12px;
+    color: #888;
+    font-style: italic;
+  }
+  #empty-state.hidden { display: none; }
+  #entries-list:empty + #empty-state { display: block; }
+
+  .summary-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0 4px;
+    font-size: 0.85rem;
+    color: #555;
+    border-top: 1px solid #eee;
+    margin-top: 8px;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid #eee;
+    padding: 14px 0;
+  }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-q {
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #16213e;
+  }
+  .faq-q::after {
+    content: '+';
+    font-size: 1.2rem;
+    font-weight: 300;
+    transition: transform 0.2s;
+    color: #0f3460;
+  }
+  .faq-item.open .faq-q::after { transform: rotate(45deg); }
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease, padding 0.25s ease;
+    color: #555;
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+  .faq-item.open .faq-a {
+    max-height: 300px;
+    padding-top: 10px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 500px) {
+    body { padding: 12px; }
+    .card { padding: 16px; }
+    .input-row { flex-direction: column; align-items: stretch; }
+    .input-row label { min-width: auto; }
+    .entry { flex-wrap: wrap; }
+    .entry > * { flex: 1 1 30% !important; }
+    .entry-header { display: none; }
+    .results-grid { grid-template-columns: 1fr; }
+    .result-item.highlight { grid-column: 1; }
+    .btn-group { flex-direction: column; }
+    .btn-group .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Share Averaging Calculator</h1>
+  <p class="subtitle">Calculate the average cost of your stock purchases</p>
+
+  <div class="card">
+    <h2>Add Purchase</h2>
+    <div class="input-row">
+      <label for="qty">Shares</label>
+      <input type="number" id="qty" placeholder="e.g. 10" min="0" step="any">
+      <label for="price">Price/Share</label>
+      <input type="number" id="price" placeholder="e.g. 150.50" min="0" step="any">
+      <button class="btn btn-primary" id="add-btn">Add</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Purchases</h2>
+    <div id="entries-list"></div>
+    <div id="empty-state">No purchases added yet. Add your first trade above.</div>
+    <div id="summary-bar" class="summary-bar hidden">
+      <span id="entry-count">0 entries</span>
+      <button class="btn btn-danger btn-sm" id="clear-btn">Clear All</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Results</h2>
+    <div class="results-grid">
+      <div class="result-item"><div class="label">Total Shares</div><div class="value" id="total-shares">0</div></div>
+      <div class="result-item"><div class="label">Total Cost</div><div class="value" id="total-cost">$0.00</div></div>
+      <div class="result-item highlight"><div class="label">Average Cost Per Share</div><div class="value" id="avg-cost">$0.00</div></div>
+    </div>
+  </div>
+
+  <div class="card" id="faqs">
+    <h2>FAQs</h2>
+    <div class="faq-item open">
+      <div class="faq-q">What is share averaging?</div>
+      <div class="faq-a">Share averaging (or cost averaging) is a strategy where you buy the same stock at different prices over time. The average cost per share helps you understand your true entry price across all purchases.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How is the average cost calculated?</div>
+      <div class="faq-a">Total Cost &divide; Total Shares. Add up the cost of all purchases (quantity &times; price) and divide by the total number of shares owned.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Does this include brokerage fees or taxes?</div>
+      <div class="faq-a">No. This calculator only uses the share price you enter. For a true cost basis, add any brokerage commissions or taxes to the price per share before entering it.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I use this for commodities, crypto, or ETFs?</div>
+      <div class="faq-a">Yes. It works for any asset you can buy in units — stocks, ETFs, crypto, mutual funds, or commodities. Just enter the quantity and price per unit.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Is my data saved anywhere?</div>
+      <div class="faq-a">No. All calculations happen in your browser. Nothing is stored on a server. Your entries will be lost if you refresh the page.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">What if I sell some shares?</div>
+      <div class="faq-a">Remove those entries from the list to reflect your remaining holdings. The average will recalculate based on what's left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  const qtyInput = document.getElementById('qty');
+  const priceInput = document.getElementById('price');
+  const addBtn = document.getElementById('add-btn');
+  const entriesList = document.getElementById('entries-list');
+  const emptyState = document.getElementById('empty-state');
+  const summaryBar = document.getElementById('summary-bar');
+  const entryCount = document.getElementById('entry-count');
+  const clearBtn = document.getElementById('clear-btn');
+  const totalSharesEl = document.getElementById('total-shares');
+  const totalCostEl = document.getElementById('total-cost');
+  const avgCostEl = document.getElementById('avg-cost');
+  const toastEl = document.getElementById('toast');
+
+  let entries = [];
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._timer);
+    toastEl._timer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  function get(id) { return document.getElementById(id); }
+
+  function validateInputs() {
+    const qty = parseFloat(qtyInput.value);
+    const price = parseFloat(priceInput.value);
+    if (!qty || qty <= 0) { toast('Enter a valid quantity.'); qtyInput.focus(); return null; }
+    if (!price || price <= 0) { toast('Enter a valid price.'); priceInput.focus(); return null; }
+    return { qty, price };
+  }
+
+  function addEntry() {
+    const val = validateInputs();
+    if (!val) return;
+    entries.push(val);
+    qtyInput.value = '';
+    priceInput.value = '';
+    qtyInput.focus();
+    render();
+    toast('Purchase added.');
+  }
+
+  function removeEntry(index) {
+    entries.splice(index, 1);
+    render();
+  }
+
+  function clearAll() {
+    if (entries.length === 0) return;
+    entries = [];
+    render();
+    toast('All entries cleared.');
+  }
+
+  function render() {
+    entriesList.innerHTML = '';
+
+    if (entries.length === 0) {
+      emptyState.classList.remove('hidden');
+      summaryBar.classList.add('hidden');
+      totalSharesEl.textContent = '0';
+      totalCostEl.textContent = '$0.00';
+      avgCostEl.textContent = '$0.00';
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    summaryBar.classList.remove('hidden');
+    entryCount.textContent = entries.length + ' entr' + (entries.length === 1 ? 'y' : 'ies');
+
+    let totalShares = 0;
+    let totalCost = 0;
+
+    entries.forEach((e, i) => {
+      totalShares += e.qty;
+      totalCost += e.qty * e.price;
+
+      const div = document.createElement('div');
+      div.className = 'entry';
+      div.innerHTML =
+        '<span>' + e.qty + '</span>' +
+        '<span>$' + e.price.toFixed(2) + '</span>' +
+        '<span>$' + (e.qty * e.price).toFixed(2) + '</span>' +
+        '<button class="btn btn-danger btn-sm" data-index="' + i + '">Delete</button>';
+      div.querySelector('button').addEventListener('click', function() { removeEntry(i); });
+      entriesList.appendChild(div);
+    });
+
+    const avg = totalCost / totalShares;
+
+    totalSharesEl.textContent = totalShares;
+    totalCostEl.textContent = '$' + totalCost.toFixed(2);
+    avgCostEl.textContent = '$' + avg.toFixed(2);
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter') { e.preventDefault(); addEntry(); }
+  }
+
+  qtyInput.addEventListener('keydown', handleKey);
+  priceInput.addEventListener('keydown', handleKey);
+  addBtn.addEventListener('click', addEntry);
+  clearBtn.addEventListener('click', clearAll);
+
+  document.querySelectorAll('.faq-q').forEach(function(q) {
+    q.addEventListener('click', function() {
+      this.parentElement.classList.toggle('open');
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
